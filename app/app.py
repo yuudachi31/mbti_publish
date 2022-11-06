@@ -1,17 +1,43 @@
 import uvicorn
 
-
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from router import product
+from router.base import api_router
+from db import models, database
 
-app = FastAPI(
-    title="Shopping Cart API",
-    description="This API was develpoed for teaching Fast API",
-    version="v0.0.1",
-    terms_of_service="http://localhost:5000",
+origins = [
+    'http://localhost:5000'
+]
+
+def include_router(app):
+    app.include_router(api_router)
+
+def setting_middleware(app):
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=['*']
+    )
+
+def bind_database():
+    models.Base.metadata.create_all(bind=database.engine)
+
+def start_application():
+    bind_database()
+    app = FastAPI(
+        title="Shopping Cart API",
+        description="This API was develpoed for teaching Fast API",
+        version="v0.0.1",
+        terms_of_service="http://localhost:5000",
         )
+    setting_middleware(app)
+    include_router(app)
+    return app
 
-app.include_router(product.router)
+app = start_application()
 
 @app.get("/")
 def root():
