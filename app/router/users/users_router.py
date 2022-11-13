@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from .. import schemas
-from db import database
+from db import database, db_user_library
 from ..login import login_router
 
 router = APIRouter()
@@ -23,7 +23,7 @@ async def get_current_user(token: str = Depends(login_router.oauth2_scheme), db:
     except JWTError:
         raise credentials_expection
 
-    user = login_router.get_user(db, username=token_data.username)
+    user = db_user_library.get_user(db, username=token_data.username)
     if not user:
         raise credentials_expection
 

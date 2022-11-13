@@ -6,12 +6,10 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from db import database
-import db.models as orm_models
+from db import database, db_user_library
 from .. import schemas
 
 SECRET_KEY = "4aa4944891e2845a48f1ba19426004367d8ff6c008336855beb38b94f8070593"
-#SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 
 ALGORITHM = "HS256"
 
@@ -26,11 +24,8 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated="auto")
 def verify_password(plain_password, hased_password):
     return pwd_context.verify(plain_password, hased_password)
 
-def get_user(db: Session, username: str):
-    return db.query(orm_models.User).filter(orm_models.User.username == username).first()
-
 def authenticate_user(db: Session, username: str, password: str):
-    user = get_user(db, username)
+    user = db_user_library.get_user(db, username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):

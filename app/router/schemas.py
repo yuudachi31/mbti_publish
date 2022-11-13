@@ -1,6 +1,7 @@
 #For the Pydantic model
-from typing import Optional
-from pydantic import BaseModel
+from typing import Literal, Optional
+from pydantic import BaseModel, Json, JsonWrapper, validator
+from pydantic.types import JsonMeta
 
 class Token(BaseModel):
     access_token: str
@@ -20,6 +21,21 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     disabled: bool
+
+    class Config:
+        orm_mode = True
+
+class ArticleRequestSchema(BaseModel):
+    be_posted: bool
+    label: list[int]
+    title: str
+    author_1: Optional[str] = None
+    author_2: Optional[str] = None
+    image: str
+    content: str
+
+class ArticleResponseSchema(ArticleRequestSchema):
+    id: int
 
     class Config:
         orm_mode = True
