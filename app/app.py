@@ -28,8 +28,8 @@ def bind_database():
 def start_application():
     bind_database()
     app = FastAPI(
-        title="Shopping Cart API",
-        description="This API was develpoed for teaching Fast API",
+        title="Universe of MBTI",
+        description="This API was develpoed for MBTI",
         version="v0.0.1",
         terms_of_service="http://localhost:5000",
         )
