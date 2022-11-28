@@ -1,5 +1,8 @@
 This project uses python venv to run.
 
+##Enviroment
+python 3.10
+
 ## Install
 1.create venv
 ```
@@ -16,5 +19,5 @@ source ./bin/activate // I'm using linux, so if you couldn't activate the venv t
 
 4.install packages
 ```
-$ pip3 install requirements.txt
+$ pip3 install -r requirements.txt
 ```

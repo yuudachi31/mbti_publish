@@ -15,6 +15,54 @@ def db_feed(db: Session):
     db.commit()
     return db.query(orm_models.Category).all()
 
+def db_update_article(db: Session, update_content: orm_models.Article):
+    article = db.query(orm_models.Article).filter(orm_models.Article == update_content.article_id)
+    if hasattr(update_content, 'isposted'): 
+        article.update({
+            orm_models.Article.isposted: update_content.isposted,
+            })
+
+    if "title" in update_content:
+        print("Change title")
+        article.update({
+            orm_models.Article.title: update_content.title
+            })
+
+    if "author_1" in update_content:
+        print("Change author_1")
+        article.update({
+            orm_models.Article.author_1: update_content.author_1
+            })
+    if "author_2" in update_content:
+        print("Change author_2")
+        article.update({
+            orm_models.Article.author_2: update_content.author_2
+            })
+
+    if "image" in update_content:
+        print("Change image")
+        article.update({ orm_models.Article.image: update_content.image})
+
+    if "content" in update_content:
+        print("Change content")
+        article.update({ orm_models.Article.content: update_content.content})
+
+    if "labels" in update_content:
+        article_detail = db.query(orm_models.Article).filter(orm_models.Article.id == update_content.article_id).first()
+        article_detail.all_labels.clear()
+        all_labels = get_all_label(db, update_content.labels)
+        for label in all_labels:
+            article_detail.all_labels.append(label)
+
+    db.commit()
+
+    new_article = db.query(orm_models.Article).filter(orm_models.Article.id == update_content.article_id).first()
+
+    return new_article
+
+
+    
+
 def get_all_label(db: Session, labels: List[int]):
     all_labels = []
     for label in labels:

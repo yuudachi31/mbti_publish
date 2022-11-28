@@ -23,13 +23,6 @@ class User(Base):
     disabled = Column(Boolean, default=False)
     admin = Column(Boolean, default=False)
 
-#class Association(Base):
-#    __tablename__ = "association_table"
-#    left_id = Column(ForeignKey("labels.id"), primary_key=True)
-#    right_id = Column(ForeignKey("articles.id"), primary_key=True)
-#    label = relationship("Category", back_populates="all_articles")
-#    article = relationship("Article", back_populates="all_labels")
-
 association_table = Table(
     "association_table",
     Base.metadata,

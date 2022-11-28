@@ -36,6 +36,16 @@ class ArticleBaseSchema(BaseModel):
 class ArticleRequestSchema(ArticleBaseSchema):
     labels: list[int]
 
+class ArticleEditRequestSchema(BaseModel):
+    article_id: int
+    isposted: Optional[bool] = None
+    title: Optional[str] = None
+    author_1: Optional[str] = None
+    author_2: Optional[str] = None
+    image: Optional[str] = None
+    content: Optional[str] = None
+    labels: Optional[list[int]] = None
+
 # Just return the article without label
 class ArticleResponseSchema(ArticleBaseSchema):
     id: int
