@@ -3,11 +3,13 @@ from sqlalchemy import true
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, Query, status
 from .mbti_feed import labels
+from router.schemas import ArticleEditRequestSchema
+
 import db.models as orm_models
 
 def db_feed(db: Session):
     new_label_list = [orm_models.Category(
-        label=feed_label["label"]
+        tag=feed_label["label"]
         ) for feed_label in labels]
     db.query(orm_models.Category).delete()
     db.commit()
@@ -15,44 +17,44 @@ def db_feed(db: Session):
     db.commit()
     return db.query(orm_models.Category).all()
 
-def db_update_article(db: Session, update_content: orm_models.Article):
-    article = db.query(orm_models.Article).filter(orm_models.Article == update_content.article_id)
-    if hasattr(update_content, 'isposted'): 
+def db_update_article(db: Session, update_content: ArticleEditRequestSchema):
+    article = db.query(orm_models.Article).filter(orm_models.Article.id == update_content.article_id)
+    if update_content.publish != None: 
         article.update({
-            orm_models.Article.isposted: update_content.isposted,
+            orm_models.Article.publish: update_content.publish,
             })
 
-    if "title" in update_content:
-        print("Change title")
+    if update_content.articleTitle != None:
         article.update({
-            orm_models.Article.title: update_content.title
+            orm_models.Article.articleTitle: update_content.articleTitle
             })
 
-    if "author_1" in update_content:
-        print("Change author_1")
+    if update_content.articleDescription != None:
+        article.update({
+            orm_models.Article.articleDescription: update_content.articleDescription
+            })
+
+    if update_content.author_1 != None:
         article.update({
             orm_models.Article.author_1: update_content.author_1
             })
-    if "author_2" in update_content:
-        print("Change author_2")
+    if update_content.author_2 != None:
         article.update({
             orm_models.Article.author_2: update_content.author_2
             })
 
-    if "image" in update_content:
-        print("Change image")
+    if update_content.image != None:
         article.update({ orm_models.Article.image: update_content.image})
 
-    if "content" in update_content:
-        print("Change content")
-        article.update({ orm_models.Article.content: update_content.content})
+    if update_content.articleContent != None:
+        article.update({ orm_models.Article.articleContent: update_content.articleContent})
 
-    if "labels" in update_content:
+    if len(update_content.tags) > 0:
         article_detail = db.query(orm_models.Article).filter(orm_models.Article.id == update_content.article_id).first()
-        article_detail.all_labels.clear()
-        all_labels = get_all_label(db, update_content.labels)
+        article_detail.all_tags.clear()
+        all_labels = get_all_label(db, update_content.tags)
         for label in all_labels:
-            article_detail.all_labels.append(label)
+            article_detail.all_tags.append(label)
 
     db.commit()
 
@@ -61,7 +63,13 @@ def db_update_article(db: Session, update_content: orm_models.Article):
     return new_article
 
 
-    
+def db_delete_article(id: int, db: Session):
+    article = db.query(orm_models.Article).filter(orm_models.Article.id == id).first()
+    if article:
+        db.delete(article)
+        db.commit()
+    else:
+        print("The article id doesn't exist")
 
 def get_all_label(db: Session, labels: List[int]):
     all_labels = []
@@ -73,12 +81,18 @@ def get_all_label(db: Session, labels: List[int]):
 def get_all_article(db: Session):
     return db.query(orm_models.Article).all()
 
-def get_all_post_article(db: Session) -> list[orm_models.Article]:
-    articles = db.query(orm_models.Article).filter(orm_models.Article.isposted == True).all()
+def get_all_post_article(db: Session) -> List[orm_models.Article]:
+    articles = db.query(orm_models.Article).filter(orm_models.Article.publish == True).all()
     return articles
 
 def get_ten_post_article(db: Session, begin_id: int):
-    return db.query(orm_models.Article).filter(orm_models.Article.id <= begin_id).all()
+    articles = db.query(orm_models.Article).filter(orm_models.Article.publish == True).all()
+    returnArticles = []
+    for i in range(begin_id):
+        if i >= len(articles):
+            break
+        returnArticles.append(articles[i])
+    return returnArticles
 
 def get_article_by_id(id: int, db: Session):
     article = db.query(orm_models.Article).filter(orm_models.Article.id == id).first()
@@ -86,7 +100,7 @@ def get_article_by_id(id: int, db: Session):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Article with id = {id} not found")
     return article
 
-def get_article_by_labels(db: Session, label: List[int] = Query(...)) -> list[orm_models.Article]:
+def get_article_by_labels(db: Session, label: List[int] = Query(...)) -> List[orm_models.Article]:
     all_articles_id = []
     for label_id in label:
         for left_id in db.query(orm_models.association_table).filter(orm_models.association_table.c.left_id == label_id).all():
@@ -97,7 +111,7 @@ def get_article_by_labels(db: Session, label: List[int] = Query(...)) -> list[or
         all_articles.append(db.query(orm_models.Article).filter(orm_models.Article.id == id).first())
     return all_articles
 
-def get_article_labels_from_association_table(id: int, db: Session) -> list[orm_models.Category]:
+def get_article_labels_from_association_table(id: int, db: Session) -> List[orm_models.Category]:
     all_association = db.query(orm_models.association_table).filter(orm_models.association_table.c.right_id == id).order_by(orm_models.association_table.c.left_id.asc()).all() 
     all_labels = []
     for label in all_association:
