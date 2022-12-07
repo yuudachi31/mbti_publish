@@ -25,26 +25,30 @@ class User(UserBase):
         orm_mode = True
 
 class ArticleBaseSchema(BaseModel):
-    isposted: bool
-    title: str
+    publish: bool
+    articleTitle: str
+    articleDescription: str
+    date: str
+    date2: str
     author_1: Optional[str] = None
     author_2: Optional[str] = None
     image: str
-    content: str
+    articleContent: str
 
 # From frontend get a list label id
 class ArticleRequestSchema(ArticleBaseSchema):
-    labels: list[int]
+    tags: List[int]
 
 class ArticleEditRequestSchema(BaseModel):
     article_id: int
-    isposted: Optional[bool] = None
-    title: Optional[str] = None
+    publish: Optional[bool] = None
+    articleTitle: Optional[str] = None
+    articleDescription: Optional[str] = None
     author_1: Optional[str] = None
     author_2: Optional[str] = None
     image: Optional[str] = None
-    content: Optional[str] = None
-    labels: Optional[list[int]] = None
+    articleContent: Optional[str] = None
+    tags: Optional[List[int]] = None
 
 # Just return the article without label
 class ArticleResponseSchema(ArticleBaseSchema):
@@ -55,7 +59,7 @@ class ArticleResponseSchema(ArticleBaseSchema):
 
 # Label base schema
 class ArticleLabelRequestSchema(BaseModel):
-    label: str
+    tag: str
 
 # Just return label
 class ArticleLabelResponseSchema(ArticleLabelRequestSchema):
@@ -67,7 +71,7 @@ class ArticleLabelResponseSchema(ArticleLabelRequestSchema):
 # Return article with all labels
 class ArticleResponseWithLabelSchema(ArticleBaseSchema):
     id: int
-    all_labels: List[ArticleLabelResponseSchema]
+    all_tags: List[ArticleLabelResponseSchema]
 
     class Config:
         orm_mode = True
