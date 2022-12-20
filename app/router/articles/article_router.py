@@ -2,6 +2,7 @@ import db.models as orm_models
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.encoders import jsonable_encoder
 from pydantic.schema import schema
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import true
@@ -13,12 +14,15 @@ router = APIRouter()
 
 def create_new_article(db: Session, article: schemas.ArticleRequestSchema):
     new_article = orm_models.Article(
-            isposted = article.isposted, 
-            title = article.title, 
+            publish = article.publish, 
+            articleTitle = article.articleTitle, 
+            articleDescription = article.articleDescription,
+            date = article.date,
+            date2 = article.date2,
             author_1 = article.author_1, 
             author_2 = article.author_2, 
             image = article.image, 
-            content = article.content,
+            articleContent = article.articleContent,
     )
 
     db.add(new_article)
@@ -27,10 +31,10 @@ def create_new_article(db: Session, article: schemas.ArticleRequestSchema):
 
     db.refresh(new_article)
 
-    all_labels = db_article_library.get_all_label(db, article.labels)
+    all_labels = db_article_library.get_all_label(db, article.tags)
 
     for label in all_labels:
-        new_article.all_labels.append(label)
+        new_article.all_tags.append(label)
 
     db.commit()
 
@@ -62,7 +66,7 @@ def create_article(article: schemas.ArticleRequestSchema , db: Session = Depends
     new_article = create_new_article(db, article)
     return new_article
 
-@router.get("/labels", response_model=List[schemas.ArticleLabelResponseSchema])
+@router.get("/tags", response_model=List[schemas.ArticleLabelResponseSchema])
 def get_article_labels_from_association_table(id: int, db: Session = Depends(database.get_db)):
     labels = db_article_library.get_article_labels_from_association_table(id, db)
     if not labels:
@@ -70,10 +74,10 @@ def get_article_labels_from_association_table(id: int, db: Session = Depends(dat
     return labels
 
 @router.get("/filterarticle", response_model=List[schemas.ArticleResponseSchema])
-def get_filter_article(labels: List[int] = Query(...), db: Session = Depends(database.get_db)):
-    articles = db_article_library.get_article_by_labels(label=labels, db=db)
+def get_filter_article(tags: List[int] = Query(...), db: Session = Depends(database.get_db)):
+    articles = db_article_library.get_article_by_labels(label=tags, db=db)
     if not articles:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Article with label = {labels} not found')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Article with label = {tags} not found')
     return articles
 
 @router.put('/edit', response_model=schemas.ArticleResponseWithLabelSchema)
@@ -89,3 +93,16 @@ def edit_article(update_content: schemas.ArticleEditRequestSchema, db: Session =
     else:
         raise credentials_expection
     return article
+
+@router.delete('/DeleteArticle')
+def delete_article(article_id: int, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(users_router.get_current_user)):
+    credentials_expection = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"}
+            )
+    if current_user.admin == True:
+        db_article_library.db_delete_article(article_id, db)
+    else:
+        raise credentials_expection
+    return {"Success"}

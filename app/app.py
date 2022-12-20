@@ -7,6 +7,7 @@ from router.base import api_router
 from db import models, database
 
 origins = [
+    'http://localhost:5000',
     'http://localhost:3000'
 ]
 
