@@ -9,6 +9,27 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
+class CommentRequest(BaseModel):
+    owner_id: int
+    article_id: int
+    commentContent: str
+
+class CommentResponseNoOwner(CommentRequest):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class LikeRequest(BaseModel):
+    owner_id: int
+    article_id: int
+
+class LikeResponseNoOwner(LikeRequest):
+    id: int
+
+    class Config:
+        orm_mode = True
+
 class UserBase(BaseModel):
     username: str
     email: EmailStr
@@ -20,6 +41,8 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     disabled: bool
+    comments: List[CommentResponseNoOwner]
+    likes: List[LikeResponseNoOwner]
 
     class Config:
         orm_mode = True
@@ -68,10 +91,28 @@ class ArticleLabelResponseSchema(ArticleLabelRequestSchema):
     class Config:
         orm_mode = True
 
+
+class CommentResponse(CommentRequest):
+    id: int
+    owner: User
+
+    class Config:
+        orm_mode = True
+
+
+class LikeResponse(LikeRequest):
+    id: int
+    owner: User
+
+    class Config:
+        orm_mode = True
+
 # Return article with all labels
 class ArticleResponseWithLabelSchema(ArticleBaseSchema):
     id: int
     all_tags: List[ArticleLabelResponseSchema]
+    comments: List[CommentResponse]
+    likes: List[LikeResponse]
 
     class Config:
         orm_mode = True

@@ -2,7 +2,6 @@ import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from router import product
 from router.base import api_router
 from db import models, database
 

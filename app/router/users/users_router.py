@@ -34,6 +34,6 @@ async def get_current_active_user(user: schemas.User = Depends(get_current_user)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid User")
     return user
 
-@router.get("/me")
+@router.get("/me", response_model=schemas.User)
 async def read_user(user: schemas.User = Depends(get_current_active_user)):
     return user

@@ -22,6 +22,8 @@ class User(Base):
     hashed_password = Column(Text)
     disabled = Column(Boolean, default=False)
     admin = Column(Boolean, default=False)
+    comments = relationship('Comment', back_populates='owner')
+    likes = relationship('Like', back_populates='owner')
 
 association_table = Table(
     "association_table",
@@ -44,6 +46,8 @@ class Article(Base):
     image = Column(Text, nullable=True)
     articleContent = Column(Text)
     all_tags = relationship("Category", secondary=association_table, back_populates="all_articles")
+    comments = relationship("Comment", back_populates="article")
+    likes = relationship("Like", back_populates="article")
 
 class Category(Base):
     __tablename__ = "tags"
@@ -51,3 +55,21 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     tag = Column(Text, index=True)
     all_articles = relationship("Article", secondary=association_table, back_populates="all_tags")
+
+class Comment(Base):
+    __tablename__ = "comment"
+
+    id = Column(Integer, primary_key=True, index=True)
+    commentContent = Column(Text)
+    owner_id = Column(Integer, ForeignKey('users.id'))
+    owner = relationship("User", back_populates="comments")
+    article_id = Column(Integer, ForeignKey('articles.id'))
+    article = relationship("Article", back_populates="comments")
+
+class Like(Base):
+    __tablename__ = "like"
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey('users.id'))
+    owner = relationship("User", back_populates="likes")
+    article_id = Column(Integer, ForeignKey('articles.id'))
+    article = relationship("Article", back_populates="likes")

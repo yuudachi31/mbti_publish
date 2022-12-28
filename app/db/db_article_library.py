@@ -1,7 +1,10 @@
 from typing import List
-from sqlalchemy import true
 from sqlalchemy.orm import Session
+from sqlalchemy import delete
 from fastapi import HTTPException, Query, status
+from sqlalchemy.sql import Delete
+
+from router.users.users_router import schemas
 from .mbti_feed import labels
 from router.schemas import ArticleEditRequestSchema
 
@@ -66,6 +69,10 @@ def db_update_article(db: Session, update_content: ArticleEditRequestSchema):
 def db_delete_article(id: int, db: Session):
     article = db.query(orm_models.Article).filter(orm_models.Article.id == id).first()
     if article:
+        del_com = Delete(orm_models.Comment).where(orm_models.Comment.article_id == id)
+        del_like = Delete(orm_models.Like).where(orm_models.Like.article_id == id)
+        db.execute(del_com)
+        db.execute(del_like)
         db.delete(article)
         db.commit()
     else:
@@ -117,3 +124,33 @@ def get_article_labels_from_association_table(id: int, db: Session) -> List[orm_
     for label in all_association:
         all_labels.append(db.query(orm_models.Category).filter(orm_models.Category.id == label[0]).first())
     return all_labels
+
+def db_post_comment(db: Session, content: schemas.CommentRequest):
+    new_comment = orm_models.Comment(
+        owner_id = content.owner_id,
+        article_id = content.article_id,
+        commentContent = content.commentContent
+            )
+    db.add(new_comment)
+
+    db.commit()
+
+    db.refresh(new_comment)
+
+    return new_comment
+
+def db_like_update(db: Session, content: schemas.LikeRequest):
+    isAlready = db.query(orm_models.Like).filter(orm_models.Like.owner_id == content.owner_id, orm_models.Like.article_id == content.article_id).first()
+    if isAlready:
+        db.delete(isAlready)
+        db.commit()
+        return isAlready
+    else:
+        new_like = orm_models.Like(
+            owner_id = content.owner_id,
+            article_id = content.article_id,
+                )
+        db.add(new_like)
+        db.commit()
+        db.refresh(new_like)
+        return new_like
