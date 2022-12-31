@@ -2,10 +2,7 @@ import db.models as orm_models
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.encoders import jsonable_encoder
-from pydantic.schema import schema
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import true
 from .. import schemas
 from db import database, db_article_library
 from ..users import users_router
@@ -45,6 +42,9 @@ def create_new_article(db: Session, article: schemas.ArticleRequestSchema):
 def feed_initial_labels(db: Session = Depends(database.get_db)):
     return db_article_library.db_feed(db)
 
+@router.get('/article_id', response_model=schemas.ArticleResponseWithLabelSchema)
+def get_article_by_id(id: int, db: Session = Depends(database.get_db)):
+    return db_article_library.get_article_by_id(id=id, db=db)
 # Get all article for admin
 @router.get('/admin/all', response_model=List[schemas.ArticleResponseWithLabelSchema])
 def get_all_article(db: Session = Depends(database.get_db)):
@@ -93,6 +93,44 @@ def edit_article(update_content: schemas.ArticleEditRequestSchema, db: Session =
     else:
         raise credentials_expection
     return article
+
+@router.post('/comment', response_model=schemas.CommentResponse)
+def post_comment(commentContent: schemas.CommentRequest, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(users_router.get_current_user)):
+    credentials_expection = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"}
+            )
+    comment = None
+    if current_user and current_user.id == commentContent.owner_id:
+        comment = db_article_library.db_post_comment(db, commentContent)
+    else:
+        raise credentials_expection
+    return comment
+
+@router.put('/like', response_model=schemas.LikeResponse)
+def click_like(likeContent: schemas.LikeRequest, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(users_router.get_current_user)):
+    credentials_expection = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"}
+            )
+    none_expection = HTTPException(
+        status_code=status.HTTP_204_NO_CONTENT,
+        detail="No return",
+        headers={"WWW-Authenticate": "Bearer"}
+            )
+    like = None
+    if current_user and current_user.id == likeContent.owner_id:
+        like = db_article_library.db_like_update(db, likeContent)
+    else:
+        raise credentials_expection
+
+    if like:
+        return like
+    else:
+        raise none_expection
+
 
 @router.delete('/DeleteArticle')
 def delete_article(article_id: int, db: Session = Depends(database.get_db), current_user: schemas.User = Depends(users_router.get_current_user)):
