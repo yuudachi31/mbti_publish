@@ -8,7 +8,7 @@ from db import models, database
 origins = [
     'http://localhost:5000',
     'http://localhost:3000',
-    'https://mbtipublish-server-production.up.railway.app/'
+    'https://mbtipublish-server-production.up.railway.app'
 ]
 
 def include_router(app):
@@ -17,7 +17,7 @@ def include_router(app):
 def setting_middleware(app):
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=['*']
